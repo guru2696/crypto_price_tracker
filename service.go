@@ -1,36 +1,57 @@
 package main
 
 import (
-	"encoding/json"
-	"net/http"
+	"crypto_price_tracker/clients"
+	"fmt"
+	"log"
+	"os"
+	"strconv"
+	"time"
 )
 
-type CoinResponse struct {
-	Time       map[string]string               `json:"time"`
-	Disclaimer string                          `json:"disclaimer"`
-	ChartName  string                          `json:"chartName"`
-	Bpi        map[string]CoinResponseCurrency `json:"bpi"`
-}
+func GetBitCoinPrice() (interface{}, error) {
+	var coinAPIClient clients.CoinClientService
+	coinAPIClient = clients.CoinDesk{}
 
-type CoinResponseCurrency struct {
-	Code        string  `json:"code"`
-	Symbol      string  `json:"symbol"`
-	Rate        string  `json:"rate"`
-	Description string  `json:"description"`
-	RateFloat   float64 `json:"rate_float"`
-}
+	resp, err := coinAPIClient.FetchCurrentPrice()
 
-func GetBitCoinPrice() (CoinResponse, error) {
-	resp, err := http.Get("https://api.coindesk.com/v1/bpi/currentprice.json")
 	if err != nil {
-		return CoinResponse{}, err
+		return clients.CoinResponse{}, err
 	}
 
-	defer resp.Body.Close()
+	formattedData := map[string]map[string]string{
+		"bitcoin": {
+			"EUR": resp.Bpi["EUR"].Rate,
+			"USD": resp.Bpi["USD"].Rate,
+		},
+	}
 
-	var responseJSON CoinResponse
-	json.NewDecoder(resp.Body).Decode(&responseJSON)
-
-	return responseJSON, nil
+	SetPriceCache("bitcoin_price_USD", formattedData["bitcoin"]["USD"])
+	SetPriceCache("bitcoin_price_EUR", formattedData["bitcoin"]["EUR"])
+	return formattedData, nil
 }
 
+func GetBitCoinPriceCache() map[string]map[string]string {
+	rc := clients.RedisClient{}
+	valUSD := rc.GetValue("bitcoin_price_USD")
+	valEUR := rc.GetValue("bitcoin_price_EUR")
+
+	if valUSD != "" {
+		log.Default().Println("Fetching Redis....")
+		formattedData := map[string]map[string]string{
+			"bitcoin": {
+				"EUR": valEUR,
+				"USD": valUSD,
+			},
+		}
+		return formattedData
+	}
+	return nil
+}
+
+func SetPriceCache(key string, val string) {
+	rc := clients.RedisClient{}
+	expirySeconds, _ := strconv.Atoi(os.Getenv("EXPIRY_SECONDS"))
+	fmt.Println(expirySeconds)
+	rc.SetValue(key, val, time.Duration(expirySeconds)*time.Second)
+}
