@@ -2,8 +2,7 @@ package main
 
 import (
 	"crypto_price_tracker/clients"
-	"fmt"
-	"log"
+	"crypto_price_tracker/plog"
 	"os"
 	"strconv"
 	"time"
@@ -37,7 +36,7 @@ func GetBitCoinPriceCache() map[string]map[string]string {
 	valEUR := rc.GetValue("bitcoin_price_EUR")
 
 	if valUSD != "" {
-		log.Default().Println("Fetching Redis....")
+		plog.Info("Fetching Redis....", nil)
 		formattedData := map[string]map[string]string{
 			"bitcoin": {
 				"EUR": valEUR,
@@ -52,6 +51,5 @@ func GetBitCoinPriceCache() map[string]map[string]string {
 func SetPriceCache(key string, val string) {
 	rc := clients.RedisClient{}
 	expirySeconds, _ := strconv.Atoi(os.Getenv("EXPIRY_SECONDS"))
-	fmt.Println(expirySeconds)
 	rc.SetValue(key, val, time.Duration(expirySeconds)*time.Second)
 }

@@ -2,7 +2,6 @@ package clients
 
 import (
 	"context"
-	"fmt"
 	"github.com/go-redis/redis/v8"
 	"time"
 )
@@ -34,7 +33,6 @@ func (rc *RedisClient) GetValue(key string) string {
 }
 
 func (rc *RedisClient) SetValue(key string, val interface{}, expiry time.Duration) string {
-	fmt.Println(key, val)
 	rc.Configure()
 	defer rc.client.Close()
 	ctx := context.Background()
