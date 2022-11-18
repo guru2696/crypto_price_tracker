@@ -13,16 +13,20 @@ const (
 	SENTRY_DSN_KEY = configKey("sentry.dsn")
 	SENTRY_ENABLED = configKey("sentry.enable")
 
-	PLOG_LEVEL    = configKey("plog.log_level")
-	PLOG_TYPE     = configKey("plog.log_type")
-	PLOG_LOCATION = configKey("plog.log_location")
+	PLOG_LEVEL           = configKey("plog.log_level")
+	PLOG_TYPE            = configKey("plog.log_type")
+	PLOG_LOCATION        = configKey("plog.log_location")
+	CRYPTO_URL           = configKey("crypto_url")
+	REDIS_URL            = configKey("redis_url")
+	REDIS_PASSWORD       = configKey("redis_password")
+	REDIS_EXPIRY_SECONDS = configKey("redis_expiry_seconds")
 )
 
 // Gets the value for given key from the config file.
 // It panics no configuration value is present
 func (c configKey) Get() string {
 	val := configProvider.GetString(string(c))
-	if val == "" {
+	if val == "" && c != "redis_password" {
 		panic(errors.New("Configuration value not found [" + string(c) + "]"))
 	}
 	return val

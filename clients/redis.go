@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"crypto_price_tracker/config"
 	"github.com/go-redis/redis/v8"
 	"time"
 )
@@ -12,8 +13,8 @@ type RedisClient struct {
 
 func (rc *RedisClient) Configure() {
 	rc.client = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
+		Addr:     config.GetRedisURL(),
+		Password: config.GetRedisPassword(),
 		DB:       0,
 	})
 

@@ -1,6 +1,9 @@
 package clients
 
 import (
+	"crypto_price_tracker/config"
+	"crypto_price_tracker/plerrors"
+	"crypto_price_tracker/plog"
 	"encoding/json"
 	"net/http"
 )
@@ -11,7 +14,7 @@ type CoinDesk struct {
 
 func Configure() *CoinDesk {
 	return &CoinDesk{
-		URL: "https://api.coindesk.com/v1/bpi/currentprice.json",
+		URL: config.GetCryptoURL(),
 	}
 }
 
@@ -25,7 +28,12 @@ func (c CoinDesk) FetchCurrentPrice() (CoinResponse, error) {
 	defer resp.Body.Close()
 
 	var responseJSON CoinResponse
-	json.NewDecoder(resp.Body).Decode(&responseJSON)
+	err = json.NewDecoder(resp.Body).Decode(&responseJSON)
+	if err != nil {
+		return CoinResponse{}, plerrors.NewAppError("FetchCurrentPrice", "",
+			"Response Decoding Error", plerrors.InternalServiceError,
+			err.Error(), plog.Params{})
+	}
 
 	return responseJSON, nil
 }

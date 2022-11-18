@@ -1,8 +1,10 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -44,6 +46,27 @@ func SetCryptoConfig(configPath string) error {
 // IsDevelopment Returns true if current environment is Development
 func IsDevelopment() bool {
 	return env == Development
+}
+
+func GetCryptoURL() string {
+	return CRYPTO_URL.Get()
+}
+
+func GetRedisURL() string {
+	return REDIS_URL.Get()
+}
+
+func GetRedisPassword() string {
+	return REDIS_PASSWORD.Get()
+}
+
+func GetRedisExpiry() (int, error) {
+	expiry := REDIS_EXPIRY_SECONDS.Get()
+	expiryInt, err := strconv.Atoi(expiry)
+	if err != nil {
+		return 0, errors.New("integer conversion error")
+	}
+	return expiryInt, nil
 }
 
 // IsProduction Returns true if current environment is Production

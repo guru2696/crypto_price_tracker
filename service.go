@@ -2,20 +2,21 @@ package main
 
 import (
 	"crypto_price_tracker/clients"
+	"crypto_price_tracker/config"
+	"crypto_price_tracker/plerrors"
 	"crypto_price_tracker/plog"
-	"os"
-	"strconv"
+	"encoding/json"
 	"time"
 )
 
-func GetBitCoinPrice() (interface{}, error) {
+func GetBitCoinPrice() (CoinAPIResponse, error) {
 	var coinAPIClient clients.CoinClientService
 	coinAPIClient = clients.CoinDesk{}
 
 	resp, err := coinAPIClient.FetchCurrentPrice()
 
 	if err != nil {
-		return clients.CoinResponse{}, err
+		return CoinAPIResponse{}, err
 	}
 
 	formattedData := map[string]map[string]string{
@@ -25,9 +26,17 @@ func GetBitCoinPrice() (interface{}, error) {
 		},
 	}
 
+	formattedDataJSON, err := json.Marshal(formattedData)
+	var response CoinAPIResponse
+	err = json.Unmarshal(formattedDataJSON, &response)
+	if err != nil {
+		return CoinAPIResponse{}, plerrors.NewAppError("GetBitCoinPrice", "", "",
+			plerrors.InternalServiceError, err.Error(), plog.Params{})
+	}
+
 	SetPriceCache("bitcoin_price_USD", formattedData["bitcoin"]["USD"])
 	SetPriceCache("bitcoin_price_EUR", formattedData["bitcoin"]["EUR"])
-	return formattedData, nil
+	return response, nil
 }
 
 func GetBitCoinPriceCache() map[string]map[string]string {
@@ -50,6 +59,6 @@ func GetBitCoinPriceCache() map[string]map[string]string {
 
 func SetPriceCache(key string, val string) {
 	rc := clients.RedisClient{}
-	expirySeconds, _ := strconv.Atoi(os.Getenv("EXPIRY_SECONDS"))
+	expirySeconds, _ := config.GetRedisExpiry()
 	rc.SetValue(key, val, time.Duration(expirySeconds)*time.Second)
 }
