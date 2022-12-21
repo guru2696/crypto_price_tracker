@@ -1,0 +1,7 @@
+{
+  "environment": "development",
+  "crypto_url": "https://api.coindesk.com/v1/bpi/currentprice.json",
+  "redis_url": "localhost:6379",
+  "redis_password": "",
+  "redis_expiry_seconds": 2
+}
